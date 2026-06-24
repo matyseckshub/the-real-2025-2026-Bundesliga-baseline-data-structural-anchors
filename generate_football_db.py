@@ -3,12 +3,16 @@ import random
 import os
 
 def build_bundesliga_database():
+    # FIX: seeded so the generated dataset (and any screenshots/demos of it)
+    # is reproducible run to run instead of changing every time the app restarts.
+    random.seed(42)
+
     script_dir = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(script_dir, "bundesliga_intelligence.db")
-    
+
     if os.path.exists(db_path):
         os.remove(db_path)
-        
+
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -52,7 +56,7 @@ def build_bundesliga_database():
         ("Eintracht Frankfurt", 260.0, 58.0, 58000, 75.0, 5),
         ("TSG 1899 Hoffenheim", 140.0, 50.0, 30150, 55.0, 4),
         ("SV Werder Bremen", 110.0, 46.0, 42100, 42.0, 5),
-        ("SC Freiburg", 135.0, 48.0, 34700, 48.0, 11), 
+        ("SC Freiburg", 135.0, 48.0, 34700, 48.0, 11),
         ("FC Augsburg", 95.0, 42.0, 30660, 38.0, 3),
         ("1. FC Heidenheim", 65.0, 38.0, 15000, 28.0, 2),
         ("VfL Wolfsburg", 180.0, 52.0, 30000, 68.0, 4),
@@ -71,7 +75,7 @@ def build_bundesliga_database():
         """, club)
         club_id = cursor.lastrowid
 
-        # STOCHASTIC SHOCK COEFFICIENTS: Generated purely organically per run
+        # STOCHASTIC SHOCK COEFFICIENTS: seeded per run for reproducibility
         goalkeeper_variance = random.choice(["Elite", "Standard", "Slump"])
         injury_proneness = random.choice(["High_Load", "Normal"])
         tactical_efficiency = random.choice(["Overperforming", "Expected", "Underperforming"])
@@ -79,27 +83,27 @@ def build_bundesliga_database():
         for md in range(1, 35):
             base_xg_gen = random.uniform(1.2, 2.4) if club[2] > 60 else random.uniform(0.8, 1.6)
             base_xg_con = random.uniform(0.7, 1.3) if club[2] > 60 else random.uniform(1.3, 2.2)
-            
+
             if tactical_efficiency == "Underperforming":
                 base_xg_gen *= 0.85
             elif tactical_efficiency == "Overperforming":
                 base_xg_gen *= 1.15
-                
+
             g_conceded_factor = 1.3 if goalkeeper_variance == "Slump" else (0.8 if goalkeeper_variance == "Elite" else 1.0)
-            
+
             xg_gen = round(max(0.2, base_xg_gen), 2)
             xg_con = round(max(0.2, base_xg_con), 2)
-            
+
             goals_scored = max(0, int(random.gauss(xg_gen, 0.8)))
             goals_conceded = max(0, int(random.gauss(xg_con * g_conceded_factor, 0.8)))
-            
+
             if goals_scored > goals_conceded:
                 points = 3
             elif goals_scored == goals_conceded:
                 points = 1
             else:
                 points = 0
-                
+
             injuries = random.randint(3, 9) if injury_proneness == "High_Load" and md > 20 else random.randint(1, 4)
             academy_minutes = random.randint(180, 450) if club[0] in ["SC Freiburg", "Mainz 05", "VfB Stuttgart"] else random.randint(0, 180)
 
@@ -114,3 +118,4 @@ def build_bundesliga_database():
 
 if __name__ == "__main__":
     build_bundesliga_database()
+   
